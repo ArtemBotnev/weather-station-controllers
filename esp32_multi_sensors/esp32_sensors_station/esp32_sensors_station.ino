@@ -4,6 +4,8 @@
 
 #include "network.h"
 
+NetworkService networkService;
+
 measurement measurement = {
         3, // time zone
         { // device
@@ -18,7 +20,7 @@ void setup() {
 //    establishConnection();
 Serial.begin(115200);
   Serial.print("Connected to WiFi network with IP Address: ");
-  Serial.println(establishConnection());
+  Serial.println(networkService.establishConnection());
   delay(3000);
 }
 
@@ -28,7 +30,7 @@ void loop() {
 //    sendData(measurement);
 
     Serial.print("HTTP Response code: ");
-    Serial.println(sendData(measurement));
+    Serial.println(networkService.sendData(measurement));
     delay(5000);
 }
 
