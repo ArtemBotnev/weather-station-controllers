@@ -6,7 +6,7 @@
 #define DEVICE_DATA_H
 
 #include "inttypes.h"
-#define MEASURE_COUNT 2
+#define MEASURE_COUNT 4
 
 #define BASE_JSON_CHAR_CAPACITY 1024 // could be extends for long strings
 #define MEASURE_JSON_CHAR_CAPACITY 2048 // could be extends for long strings
