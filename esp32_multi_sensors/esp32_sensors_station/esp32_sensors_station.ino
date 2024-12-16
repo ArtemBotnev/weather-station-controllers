@@ -89,7 +89,7 @@ void readBme() {
     delay(SENSOR_READ_DELAY_MS);
 
     measurement.measures[1] = (measure) {
-            "bme_0", // id
+            "bme_0_temp", // id
             "bme_0_app_55", // sensor name
             "room", //place
             "temperature", // measure name
@@ -98,7 +98,7 @@ void readBme() {
     };
 
     measurement.measures[2] = (measure) {
-            "bme_0", // id
+            "bme_0_hum", // id
             "bme_0_app_55", // sensor name
             "room", //place
             "humidity", // measure name
@@ -107,7 +107,7 @@ void readBme() {
     };
 
     measurement.measures[3] = (measure) {
-            "bme_0", // id
+            "bme_0_press", // id
             "bme_0_app_55", // sensor name
             "room", //place
             "atm. pressure", // measure name
