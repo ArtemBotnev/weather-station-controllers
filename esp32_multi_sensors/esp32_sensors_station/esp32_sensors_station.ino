@@ -3,31 +3,25 @@
 //
 
 #include <Wire.h>
-#include <OneWire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <DallasTemperature.h>
+#include <Adafruit_SHT4x.h>
 
 #include "network.h"
 
 #define I2C_SDA 33
 #define I2C_SCL 32
 
-#define ONE_WIRE_BUS 4
-
 #define SENSOR_READ_DELAY_MS 500
-#define LOOP_DELAY_MS 60 * 1000
+#define LOOP_DELAY_MS 5 * 60 * 1000
 
 #define IS_DEBUG_MODE false
 
 NetworkService networkService;
 
 Adafruit_BME280 bme;
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature sensors(&oneWire);
-
-uint8_t  dallasOutdoorSensorAddr[8] = { 0x28, 0xFF, 0x71, 0x38, 0x90, 0x15, 0x03, 0x65 };
-//uint8_t  dallasBalconySensorAddr[8] = { 0x28, 0xFF, 0x84, 0x3A, 0x90, 0x15, 0x03, 0x16 };
+Adafruit_SHT4x sht4;
 
 measurement measurement = {
         3, // time zone
@@ -45,6 +39,17 @@ void setup() {
 
     if (IS_DEBUG_MODE) {
         Serial.begin(115200);
+    }
+
+    if (IS_DEBUG_MODE && !sht4.begin()) {
+        Serial.println("Couldn't find SHT4x");
+        while (1) delay(1000);
+    }
+    sht4.setPrecision(SHT4X_HIGH_PRECISION);
+    sht4.setHeater(SHT4X_NO_HEATER);
+
+    if (IS_DEBUG_MODE) {
+        Serial.begin(115200);
         Serial.print("Connected to WiFi network with IP Address: ");
         Serial.println(networkService.establishConnection());
     } else {
@@ -53,7 +58,7 @@ void setup() {
 }
 
 void loop() {
-    readDallas();
+    readSht45();
     readBme();
 
     if (IS_DEBUG_MODE) {
@@ -65,17 +70,33 @@ void loop() {
     delay(LOOP_DELAY_MS);
 }
 
-void readDallas() {
-    sensors.requestTemperatures();
+void readSht45() {
+    sensors_event_t humidity, temp;
+    sht4.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
 
-    float valueOutdoor = readDallasSensor(dallasOutdoorSensorAddr);
+    float valueOutdoorTemp = temp.temperature;
+    float valueOutdoorHum = humidity.relative_humidity;
+    if (IS_DEBUG_MODE) {
+        Serial.print("Rht45 temperature: t ℃");
+        Serial.println(valueOutdoorTemp);
+        Serial.print("Rht45 humidity: %");
+        Serial.println(valueOutdoorHum);
+    }
     measurement.measures[0] = (measure) {
-            "dallas_0", // id
-            "dallas_app_55", // sensor name
+            "sht-45_temp", // id
+            "sht-45_app_55", // sensor name
             "outdoor", //place
             "temperature", // measure name
-            valueOutdoor, // value
+            valueOutdoorTemp, // value
             "℃", // value unit
+    };
+    measurement.measures[1] = (measure) {
+            "sht-45_hum", // id
+            "sht-45_app_55", // sensor name
+            "outdoor", //place
+            "humidity", // measure name
+            valueOutdoorHum, // value
+            "%", // value unit
     };
     delay(SENSOR_READ_DELAY_MS);
 }
@@ -88,8 +109,8 @@ void readBme() {
     float pressure = bme.readPressure() * 0.0075F;
     delay(SENSOR_READ_DELAY_MS);
 
-    measurement.measures[1] = (measure) {
-            "bme_0", // id
+    measurement.measures[2] = (measure) {
+            "bme_0_temp", // id
             "bme_0_app_55", // sensor name
             "room", //place
             "temperature", // measure name
@@ -97,8 +118,8 @@ void readBme() {
             "℃", // value unit
     };
 
-    measurement.measures[2] = (measure) {
-            "bme_0", // id
+    measurement.measures[3] = (measure) {
+            "bme_0_hum", // id
             "bme_0_app_55", // sensor name
             "room", //place
             "humidity", // measure name
@@ -106,16 +127,12 @@ void readBme() {
             "%", // value unit
     };
 
-    measurement.measures[3] = (measure) {
-            "bme_0", // id
+    measurement.measures[4] = (measure) {
+            "bme_0_press", // id
             "bme_0_app_55", // sensor name
             "room", //place
             "atm. pressure", // measure name
             pressure, // value
             "mmHg", // value unit
     };
-}
-
-float readDallasSensor(uint8_t addr[8]) {
-    return sensors.getTempC(addr);
 }
