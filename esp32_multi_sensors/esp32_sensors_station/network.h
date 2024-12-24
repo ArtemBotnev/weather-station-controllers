@@ -14,7 +14,7 @@
 #define SSID "YOUR_SSID"
 #define PASSWORD "YOUR_PASSWORD"
 
-#define PUSH_MEASUREMENT_REQUEST "http://192.168.1.66:8080/send_measurement" // your_request_path
+#define PUSH_MEASUREMENT_REQUEST "http://192.168.1.85:8080/send_measurement" // your_request_path
 
 class NetworkService {
 

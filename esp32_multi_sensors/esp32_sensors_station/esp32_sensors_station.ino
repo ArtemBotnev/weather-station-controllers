@@ -41,15 +41,16 @@ void setup() {
         Serial.begin(115200);
     }
 
-    if (IS_DEBUG_MODE && !sht4.begin()) {
-        Serial.println("Couldn't find SHT4x");
+    if (!sht4.begin()) {
+        if(IS_DEBUG_MODE) {
+            Serial.println("Couldn't find SHT4x");
+        }
         while (1) delay(1000);
     }
     sht4.setPrecision(SHT4X_HIGH_PRECISION);
     sht4.setHeater(SHT4X_NO_HEATER);
 
     if (IS_DEBUG_MODE) {
-        Serial.begin(115200);
         Serial.print("Connected to WiFi network with IP Address: ");
         Serial.println(networkService.establishConnection());
     } else {
