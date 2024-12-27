@@ -25,6 +25,7 @@ struct measure {
     const char *measureName;
     float measureValue;
     const char *measureUnit;
+    bool sensorError;
 };
 
 struct measurement {
