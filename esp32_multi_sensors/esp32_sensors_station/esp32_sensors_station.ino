@@ -10,13 +10,19 @@
 
 #include "network.h"
 
+extern "C" {
+    #include "utils.h"
+}
+
 #define I2C_SDA 33
 #define I2C_SCL 32
 
-#define SENSOR_READ_DELAY_MS 500
+#define SENSOR_READ_DELAY_MS 2000
 #define LOOP_DELAY_MS 5 * 60 * 1000
 
 #define IS_DEBUG_MODE false
+
+bool isSht45Available = false;
 
 NetworkService networkService;
 
@@ -41,14 +47,16 @@ void setup() {
         Serial.begin(115200);
     }
 
-    if (!sht4.begin()) {
+    isSht45Available = sht4.begin();
+
+    if (isSht45Available) {
+        sht4.setPrecision(SHT4X_HIGH_PRECISION);
+        sht4.setHeater(SHT4X_NO_HEATER);
+    } else {
         if(IS_DEBUG_MODE) {
             Serial.println("Couldn't find SHT4x");
         }
-        while (1) delay(1000);
     }
-    sht4.setPrecision(SHT4X_HIGH_PRECISION);
-    sht4.setHeater(SHT4X_NO_HEATER);
 
     if (IS_DEBUG_MODE) {
         Serial.print("Connected to WiFi network with IP Address: ");
@@ -72,11 +80,16 @@ void loop() {
 }
 
 void readSht45() {
-    sensors_event_t humidity, temp;
-    sht4.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
+    float valueOutdoorTemp = -100.0f;
+    float valueOutdoorHum = -100.0f;
 
-    float valueOutdoorTemp = temp.temperature;
-    float valueOutdoorHum = humidity.relative_humidity;
+    if (isSht45Available) {
+        sensors_event_t humidity, temp;
+        sht4.getEvent(&humidity, &temp);// populate temp and humidity objects with fresh data
+        valueOutdoorTemp = round_two_sings_after_point(temp.temperature);
+        valueOutdoorHum = round_two_sings_after_point(humidity.relative_humidity);
+    }
+
     if (IS_DEBUG_MODE) {
         Serial.print("Rht45 temperature: t ℃");
         Serial.println(valueOutdoorTemp);
@@ -90,6 +103,7 @@ void readSht45() {
             "temperature", // measure name
             valueOutdoorTemp, // value
             "℃", // value unit
+            !is_temperature_valid(valueOutdoorTemp), // is server error (not valid value)
     };
     measurement.measures[1] = (measure) {
             "sht-45_hum", // id
@@ -98,16 +112,28 @@ void readSht45() {
             "humidity", // measure name
             valueOutdoorHum, // value
             "%", // value unit
+            !is_humidity_valid(valueOutdoorHum),  // is server error (not valid value)
     };
     delay(SENSOR_READ_DELAY_MS);
 }
 
 void readBme() {
-    float temperature = bme.readTemperature();
+    float temperature = round_two_sings_after_point(bme.readTemperature());
     delay(SENSOR_READ_DELAY_MS);
-    float humidity = bme.readHumidity();
+    float humidity = round_two_sings_after_point(bme.readHumidity());
     delay(SENSOR_READ_DELAY_MS);
     float pressure = bme.readPressure() * 0.0075F;
+    pressure = round_two_sings_after_point(pressure);
+
+    if (IS_DEBUG_MODE) {
+        Serial.print("Bme temperature: t ℃");
+        Serial.println(temperature);
+        Serial.print("Bme humidity: %");
+        Serial.println(humidity);
+        Serial.print("Bme pressure: %");
+        Serial.println(pressure);
+    }
+
     delay(SENSOR_READ_DELAY_MS);
 
     measurement.measures[2] = (measure) {
@@ -117,6 +143,7 @@ void readBme() {
             "temperature", // measure name
             temperature, // value
             "℃", // value unit
+            !is_temperature_valid(temperature), // is server error (not valid value)
     };
 
     measurement.measures[3] = (measure) {
@@ -126,6 +153,7 @@ void readBme() {
             "humidity", // measure name
             humidity, // value
             "%", // value unit
+            !is_humidity_valid(humidity), // is server error (not valid value)
     };
 
     measurement.measures[4] = (measure) {
@@ -135,5 +163,6 @@ void readBme() {
             "atm. pressure", // measure name
             pressure, // value
             "mmHg", // value unit
+            !is_atm_pressure_valid(pressure), // is server error (not valid value)
     };
 }

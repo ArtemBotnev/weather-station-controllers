@@ -56,6 +56,7 @@ void NetworkService::serializeMeasurement(measurement measurement) {
         measureJson["measureName"] = measure.measureName;
         measureJson["measureValue"] = measure.measureValue;
         measureJson["measureUnit"] = measure.measureUnit;
+        measureJson["sensorError"] = measure.sensorError;
 
         array.add(measureJson);
     }
