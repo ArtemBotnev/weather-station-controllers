@@ -20,15 +20,19 @@ int16_t NetworkService::sendData(measurement measurement) {
     int16_t httpResponseCode = 0;
 
     if (WiFi.status()== WL_CONNECTED) {
-        HTTPClient http;
+        for (int i = 0; i < HOST_COUNT; i++) {
+            char request[128];
+            snprintf(request, sizeof(request), "%s%s%s", HTTP, hosts[i], PUSH_MEASUREMENT_REQUEST);
 
-        http.begin(PUSH_MEASUREMENT_REQUEST);
+            HTTPClient http;
+            http.begin(request);
 
-        serializeMeasurement(measurement);
-        http.addHeader("Content-Type", "application/json");
-        httpResponseCode = http.POST(jsonResult);
+            serializeMeasurement(measurement);
+            http.addHeader("Content-Type", "application/json");
+            httpResponseCode = http.POST(jsonResult);
 
-        http.end();
+            http.end();
+        }
     }
 
     return httpResponseCode;

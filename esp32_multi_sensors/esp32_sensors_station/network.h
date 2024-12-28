@@ -14,7 +14,10 @@
 #define SSID "YOUR_SSID"
 #define PASSWORD "YOUR_PASSWORD"
 
-#define PUSH_MEASUREMENT_REQUEST "http://192.168.1.85:8080/send_measurement" // your_request_path
+#define HTTP "http://"
+#define PUSH_MEASUREMENT_REQUEST "/send_measurement" // your_request_path
+
+#define HOST_COUNT 2
 
 class NetworkService {
 
@@ -37,6 +40,12 @@ private:
     char jsonResult[BASE_JSON_CHAR_CAPACITY + MEASURE_JSON_CHAR_CAPACITY * MEASURE_COUNT];
 
     void serializeMeasurement(measurement measurement);
+
+    // your_hosts
+    const char* hosts[HOST_COUNT] = {
+            "192.168.1.85:8080",
+            "192.168.1.66:8080",
+    };
 };
 
 #endif //NETWORK_H
