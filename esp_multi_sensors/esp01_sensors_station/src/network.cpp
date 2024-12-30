@@ -4,7 +4,9 @@
 
 #include "network.h"
 
-NetworkService::NetworkService() = default;
+NetworkService::NetworkService(uint8_t measureCount) {
+    this->measureCount = measureCount;
+}
 
 IPAddress NetworkService::establishConnection() {
     WiFi.begin(SSID, PASSWORD);
@@ -15,9 +17,9 @@ IPAddress NetworkService::establishConnection() {
     return WiFi.localIP();
 }
 
-int16_t NetworkService::sendData(measurement measurement) {
-    HTTPClient http;
+uint16_t NetworkService::sendData(measurement measurement) {
     int16_t httpResponseCode = 0;
+    WiFiClient client;
 
     if (WiFi.status()== WL_CONNECTED) {
         for (int i = 0; i < HOST_COUNT; i++) {
@@ -25,7 +27,7 @@ int16_t NetworkService::sendData(measurement measurement) {
             snprintf(request, sizeof(request), "%s%s%s", HTTP, hosts[i], PUSH_MEASUREMENT_REQUEST);
 
             HTTPClient http;
-            http.begin(request);
+            http.begin(client, request);
 
             serializeMeasurement(measurement);
             http.addHeader("Content-Type", "application/json");
@@ -50,7 +52,7 @@ void NetworkService::serializeMeasurement(measurement measurement) {
     measurementJson["device"] = deviceJson;
 
     JsonArray array = measurementJson["measures"].to<JsonArray>();
-    for(uint8_t i = 0; i < MEASURE_COUNT; i++) {
+    for(uint8_t i = 0; i < measureCount; i++) {
         measure measure = measurement.measures[i];
 
         JsonDocument measureJson;
