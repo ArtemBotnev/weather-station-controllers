@@ -76,7 +76,7 @@ void readDht() {
             "temperature", // measure name
             temp, // value
             "℃", // value unit
-            !is_temperature_valid(temp), // is server error (not valid value)
+            !is_temperature_valid(temp) || isZero(temp), // is server error (not valid value)
     };
     measurement.measures[1] = (measure) {
             "dht-22_hum", // id

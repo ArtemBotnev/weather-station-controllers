@@ -103,7 +103,7 @@ void readSht45() {
             "temperature", // measure name
             valueOutdoorTemp, // value
             "℃", // value unit
-            !is_temperature_valid(valueOutdoorTemp), // is server error (not valid value)
+            !is_temperature_valid(valueOutdoorTemp) || isZero(valueOutdoorTemp), // is server error (not valid value)
     };
     measurement.measures[1] = (measure) {
             "sht-45_hum", // id
