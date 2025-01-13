@@ -2,8 +2,10 @@
 // Created by artem on 26.12.2024.
 //
 
-#ifndef WEATHER_STATION_CONTROLLERS_UTILS_H
-#define WEATHER_STATION_CONTROLLERS_UTILS_H
+#include "inttypes.h"
+
+#ifndef UTILS_H
+#define UTILS_H
 
 const float TEMPERATURE_MAX_LIMIT = 50.0f;
 const float TEMPERATURE_MIN_LIMIT = -50.0f;
@@ -22,4 +24,10 @@ int is_atm_pressure_valid(float pressure);
 
 float round_two_sings_after_point(float value);
 
-#endif //WEATHER_STATION_CONTROLLERS_UTILS_H
+int isZero(float value);
+
+float roundTo(float value, uint8_t sings_after_point);
+
+uint32_t powTo(uint16_t value, uint8_t exp);
+
+#endif //UTILS_H

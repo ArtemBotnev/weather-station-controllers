@@ -9,7 +9,7 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-#include "device_data.h"
+#include "../device_data.h"
 
 #define SSID "YOUR_SSID"
 #define PASSWORD "YOUR_PASSWORD"
@@ -19,10 +19,13 @@
 
 #define HOST_COUNT 2
 
+#define BASE_JSON_CHAR_CAPACITY 1024 // could be extends for long strings
+#define MEASURE_JSON_CHAR_CAPACITY 2048 // could be extends for long strings
+
 class NetworkService {
 
 public:
-    NetworkService();
+    NetworkService(uint8_t measureCount);
 
     /**
     * Establish WIFI Connection
@@ -34,9 +37,11 @@ public:
     * Send measurement json to server
     * @return response code
     */
-    int16_t sendData(measurement measurement);
+    uint16_t sendData(measurement measurement);
 
 private:
+    uint8_t measureCount;
+
     char jsonResult[BASE_JSON_CHAR_CAPACITY + MEASURE_JSON_CHAR_CAPACITY * MEASURE_COUNT];
 
     void serializeMeasurement(measurement measurement);

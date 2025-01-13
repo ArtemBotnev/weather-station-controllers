@@ -6,10 +6,8 @@
 #define DEVICE_DATA_H
 
 #include "inttypes.h"
-#define MEASURE_COUNT 5
 
-#define BASE_JSON_CHAR_CAPACITY 1024 // could be extends for long strings
-#define MEASURE_JSON_CHAR_CAPACITY 2048 // could be extends for long strings
+#define MEASURE_COUNT 5
 
 struct device {
     uint16_t id;

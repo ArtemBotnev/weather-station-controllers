@@ -5,13 +5,13 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <DallasTemperature.h>
 #include <Adafruit_SHT4x.h>
 
-#include "network.h"
+#include "device_data.h"
+#include "src/network.h"
 
 extern "C" {
-    #include "utils.h"
+    #include "src/utils.h"
 }
 
 #define I2C_SDA 33
@@ -24,7 +24,7 @@ extern "C" {
 
 bool isSht45Available = false;
 
-NetworkService networkService;
+NetworkService networkService(MEASURE_COUNT);
 
 Adafruit_BME280 bme;
 Adafruit_SHT4x sht4;
@@ -103,7 +103,7 @@ void readSht45() {
             "temperature", // measure name
             valueOutdoorTemp, // value
             "℃", // value unit
-            !is_temperature_valid(valueOutdoorTemp), // is server error (not valid value)
+            !is_temperature_valid(valueOutdoorTemp) || isZero(valueOutdoorTemp), // is server error (not valid value)
     };
     measurement.measures[1] = (measure) {
             "sht-45_hum", // id
