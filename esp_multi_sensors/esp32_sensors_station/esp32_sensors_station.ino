@@ -3,7 +3,8 @@
 //
 
 #include <Wire.h>
-#include <Adafruit_Sensor.h>
+#include <Adafruit_AHTX0.h>
+#include <Adafruit_BMP280.h>
 #include <Adafruit_BME280.h>
 #include <Adafruit_SHT4x.h>
 
@@ -23,10 +24,13 @@ extern "C" {
 #define IS_DEBUG_MODE false
 
 bool isSht45Available = false;
+bool isAhtBmpAvailable = false;
 
 NetworkService networkService(MEASURE_COUNT);
 
 Adafruit_BME280 bme;
+Adafruit_AHTX0 aht;
+Adafruit_BMP280 bmp;
 Adafruit_SHT4x sht4;
 
 measurement measurement = {
@@ -42,6 +46,7 @@ measurement measurement = {
 void setup() {
     Wire.begin(I2C_SDA, I2C_SCL);
     bme.begin();
+    isAhtBmpAvailable = aht.begin() && bmp.begin();
 
     if (IS_DEBUG_MODE) {
         Serial.begin(115200);
@@ -67,8 +72,13 @@ void setup() {
 }
 
 void loop() {
-    readSht45();
-    readBme();
+    if (isSht45Available) readSht45();
+    if (isAhtBmpAvailable) {
+        readAht();
+        readBmp();
+    } else {
+        readSingleBme();
+    }
 
     if (IS_DEBUG_MODE) {
         Serial.print("HTTP Response code: ");
@@ -117,7 +127,7 @@ void readSht45() {
     delay(SENSOR_READ_DELAY_MS);
 }
 
-void readBme() {
+void readSingleBme() {
     float temperature = round_two_sings_after_point(bme.readTemperature());
     delay(SENSOR_READ_DELAY_MS);
     float humidity = round_two_sings_after_point(bme.readHumidity());
@@ -130,7 +140,7 @@ void readBme() {
         Serial.println(temperature);
         Serial.print("Bme humidity: %");
         Serial.println(humidity);
-        Serial.print("Bme pressure: %");
+        Serial.print("Bme pressure: mmHg");
         Serial.println(pressure);
     }
 
@@ -143,7 +153,7 @@ void readBme() {
             "temperature", // measure name
             temperature, // value
             "℃", // value unit
-            !is_temperature_valid(temperature), // is server error (not valid value)
+            !is_temperature_valid(temperature) || isZero(temperature), // is server error (not valid value)
     };
 
     measurement.measures[3] = (measure) {
@@ -153,7 +163,7 @@ void readBme() {
             "humidity", // measure name
             humidity, // value
             "%", // value unit
-            !is_humidity_valid(humidity), // is server error (not valid value)
+            !is_humidity_valid(humidity) || isZero(humidity), // is server error (not valid value)
     };
 
     measurement.measures[4] = (measure) {
@@ -163,6 +173,67 @@ void readBme() {
             "atm. pressure", // measure name
             pressure, // value
             "mmHg", // value unit
-            !is_atm_pressure_valid(pressure), // is server error (not valid value)
+            !is_atm_pressure_valid(pressure) || isZero(pressure), // is server error (not valid value)
+    };
+}
+
+void readAht() {
+    sensors_event_t readHumidity, readTemp;
+    aht.getEvent(&readHumidity, &readTemp);// populate temp and humidity objects with fresh data
+
+    float temperature = round_two_sings_after_point(readTemp.temperature);
+    float humidity = round_two_sings_after_point(readHumidity.relative_humidity);
+    delay(SENSOR_READ_DELAY_MS);
+
+    if (IS_DEBUG_MODE) {
+        Serial.print("Aht temperature: t ℃");
+        Serial.println(temperature);
+        Serial.print("Aht humidity: %");
+        Serial.println(humidity);
+    }
+
+    measurement.measures[2] = (measure) {
+            "aht_0_temp", // id
+            "aht_0_app_55", // sensor name
+            "room", //place
+            "temperature", // measure name
+            temperature, // value
+            "℃", // value unit
+            !is_temperature_valid(temperature) || isZero(temperature), // is server error (not valid value)
+    };
+
+    measurement.measures[3] = (measure) {
+            "aht_0_hum", // id
+            "aht_0_app_55", // sensor name
+            "room", //place
+            "humidity", // measure name
+            humidity, // value
+            "%", // value unit
+            !is_humidity_valid(humidity) || isZero(humidity), // is server error (not valid value)
+    };
+}
+
+void readBmp() {
+    float pressure = bmp.readPressure() * 0.0075F;
+    pressure = round_two_sings_after_point(pressure);
+
+    if (IS_DEBUG_MODE) {
+        float temperature = round_two_sings_after_point(bmp.readTemperature());
+        Serial.print("Bmp temperature: t ℃");
+        Serial.println(temperature);
+        Serial.print("Bmp pressure: mmHg");
+        Serial.println(pressure);
+    }
+
+    delay(SENSOR_READ_DELAY_MS);
+
+    measurement.measures[4] = (measure) {
+            "bmp_0_press", // id
+            "bmp_0_app_55", // sensor name
+            "room", //place
+            "atm. pressure", // measure name
+            pressure, // value
+            "mmHg", // value unit
+            !is_atm_pressure_valid(pressure) || isZero(pressure), // is server error (not valid value)
     };
 }
